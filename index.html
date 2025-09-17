@@ -1,394 +1,275 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>스마트폰 슬라이더 제어 – ULTRA ver. (Mobile+)</title>
+  <meta name="color-scheme" content="dark light" />
+  <title>모바일 슬라이더 컨트롤 — Mobile First + History</title>
   <style>
     :root{
-      --bg:#0b1020; --card:#121937; --text:#e6e9f2; --muted:#94a3b8; --accent:#7cdef8; --accent-strong:#22d3ee; --surface:#1f2a55; --ok:#10b981; --warn:#f59e0b; --err:#ef4444; --ring:#1b2550; --shadow:rgba(0,0,0,.35);
+      --bg:#0b1020; --text:#e6e9f2; --muted:#94a3b8; --card:#121937; --surface:#1f2a55; --accent:#22d3ee; --ok:#10b981; --warn:#f59e0b; --ring:#1b2550; --shadow:rgba(0,0,0,.35);
     }
-    [data-theme="light"]{ --bg:#f6f9ff; --card:#ffffff; --text:#0f172a; --muted:#64748b; --accent:#0891b2; --accent-strong:#0ea5e9; --surface:#eef2ff; --ring:#e2e8f0; --shadow:rgba(0,0,0,.15); }
-    *{box-sizing:border-box}
+    @media (prefers-color-scheme:light){
+      :root{ --bg:#f6f9ff; --text:#0f172a; --muted:#64748b; --card:#ffffff; --surface:#eef2ff; --accent:#0ea5e9; --ring:#e2e8f0; --shadow:rgba(0,0,0,.12); }
+    }
+    *{box-sizing:border-box; -webkit-tap-highlight-color: transparent}
     html,body{height:100%}
-    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif; background:var(--bg); color:var(--text); display:flex; align-items:center; justify-content:center; padding:24px; padding-bottom:calc(env(safe-area-inset-bottom) + 24px); -webkit-tap-highlight-color: transparent;}
-    .wrap{width:min(1180px,96vw)}
-    .title{display:flex; align-items:center; gap:12px; justify-content:center; font-weight:900; letter-spacing:.2px; font-size:clamp(24px,5vw,42px)}
-    .subtitle{color:var(--muted); text-align:center; margin-top:6px}
-    .card{margin-top:20px; background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,0.08); border-radius:20px; box-shadow:0 10px 30px var(--shadow); padding:22px; backdrop-filter: blur(6px)}
-    .row{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
-    .grow{flex:1}
-    label{display:block; font-size:12px; color:var(--muted); margin-bottom:8px}
-    .text-input{width:100%; background:var(--surface); color:var(--text); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:14px 16px; font-size:22px; text-align:center; outline:none; transition:.2s}
-    .text-input:focus{ border-color:var(--accent-strong); box-shadow:0 0 0 6px rgba(34,211,238,0.15)}
-    .range{ -webkit-appearance:none; width:100%; height:16px; border-radius:999px; outline:none; background:#e5e7eb; touch-action: none;}
-    .range::-webkit-slider-thumb{ -webkit-appearance:none; width:38px; height:38px; border-radius:50%; background:linear-gradient(180deg,#f8fafc,#cbd5e1); border:2px solid var(--accent-strong); box-shadow:0 6px 16px var(--shadow); cursor:pointer}
-    .range::-moz-range-thumb{ width:38px; height:38px; border-radius:50%; background:#e2e8f0; border:2px solid var(--accent-strong); box-shadow:0 6px 16px var(--shadow); cursor:pointer}
-    .grid{display:grid; grid-template-columns:1.1fr .9fr; gap:18px}
-    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
-    .meta{display:flex; justify-content:space-between; margin-top:6px; color:var(--muted); font-size:12px}
-    .btn{background:linear-gradient(180deg,#23306a,#1a2450); color:#f1f5f9; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:12px 16px; font-weight:800; cursor:pointer; transition:.15s transform,.15s opacity,.2s box-shadow; min-height:44px;}
-    .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(1px)} .btn.secondary{background:linear-gradient(180deg,#152148,#0f1837)} .btn.warn{background:linear-gradient(180deg,#5f3f04,#3f2b02)} .btn.ok{background:linear-gradient(180deg,#064e3b,#022c22)}
-    .chip{padding:8px 12px; border-radius:999px; background:rgba(34,211,238,0.12); border:1px solid rgba(34,211,238,0.35); color:#bbf7d0; font-weight:900}
-    .help{color:var(--muted); font-size:12px; margin-top:6px}
-    .toast{position:fixed; bottom:calc(env(safe-area-inset-bottom) + 18px); left:50%; transform:translateX(-50%); background:rgba(7,18,28,0.9); color:#d1fae5; border:1px solid rgba(16,185,129,.4); padding:12px 16px; border-radius:12px; box-shadow:0 8px 22px var(--shadow); opacity:0; pointer-events:none; transition:.25s}
-    .toast.show{opacity:1; pointer-events:auto}
-    .panel{display:grid; grid-template-columns:1fr 1fr; gap:14px}
-    .kbd{font-family:ui-monospace,SFMono-Regular,Consolas,Monaco,monospace; background:var(--ring); padding:4px 8px; border-radius:8px}
-    .marks{display:flex; gap:8px; flex-wrap:wrap}
-    .mark{padding:10px 12px; border-radius:999px; background:var(--surface); border:1px solid rgba(255,255,255,.08); cursor:pointer; font-weight:800; min-height:40px}
-    .mark.active{outline:2px solid var(--accent-strong)}
-    .switch{display:flex; align-items:center; gap:8px}
-    .switch input{transform:scale(1.2)}
-    .mono{font-family:ui-monospace,monospace}
-    canvas{width:100%; height:180px; background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,.06); border-radius:12px; touch-action: pan-y}
-    .gauge{display:grid; place-items:center; padding:10px; touch-action: none}
-    .gauge svg{max-width:240px}
-    .gauge .val{position:absolute; font-weight:900; font-size:28px}
-    .pill{display:inline-flex; align-items:center; gap:8px; padding:8px 10px; background:var(--surface); border:1px solid rgba(255,255,255,.08); border-radius:999px}
-    .xsmall{font-size:11px; color:var(--muted)}
-    .danger{color:#fecaca}
+    body{margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,sans-serif}
+    .wrap{min-height:100dvh; display:flex; flex-direction:column; padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom));}
 
-    /* 📱 모바일 특화(손가락 입력) */
-    @media (pointer:coarse){
-      .text-input{font-size:26px; padding:16px}
-      .btn{min-width:44px; min-height:48px; padding:14px 18px}
-      .range{height:20px}
-      .range::-webkit-slider-thumb{width:42px; height:42px}
-      .range::-moz-range-thumb{width:42px; height:42px}
-    }
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .title{font-weight:900; font-size:clamp(18px,5vw,22px)}
+    .subtitle{color:var(--muted); font-size:12px}
+
+    .card{margin-top:12px; background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:16px; box-shadow:0 10px 30px var(--shadow); padding:16px}
+
+    .value{display:flex; align-items:baseline; gap:8px; justify-content:center; margin:6px 0 2px}
+    .value .num{font-weight:900; font-size:clamp(36px,12vw,56px); letter-spacing:0.5px}
+    .value .unit{color:var(--muted); font-weight:700}
+
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .grow{flex:1}
+
+    .text-input{width:100%; background:var(--surface); color:var(--text); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:14px 16px; font-size:20px; text-align:center; outline:none}
+    .text-input:focus{ box-shadow:0 0 0 6px rgba(34,211,238,.13); border-color:var(--accent)}
+
+    .range{ -webkit-appearance:none; width:100%; height:22px; border-radius:999px; outline:none; background:#e5e7eb; touch-action: none;}
+    .range::-webkit-slider-thumb{ -webkit-appearance:none; width:44px; height:44px; border-radius:50%; background:linear-gradient(180deg,#f8fafc,#cbd5e1); border:2px solid var(--accent); box-shadow:0 6px 16px var(--shadow)}
+    .range::-moz-range-thumb{ width:44px; height:44px; border-radius:50%; background:#e2e8f0; border:2px solid var(--accent); box-shadow:0 6px 16px var(--shadow)}
+
+    .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(180deg,#23306a,#1a2450); color:#eef2ff; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:12px 16px; font-weight:800; min-height:48px; min-width:48px}
+    .btn.ghost{background:var(--surface)}
+    .btn.ok{background:linear-gradient(180deg,#064e3b,#022c22)}
+    .btn.warn{background:linear-gradient(180deg,#5f3f04,#3f2b02)}
+
+    .chip{display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border-radius:999px; background:rgba(34,211,238,.12); border:1px solid rgba(34,211,238,.35); font-weight:800}
+
+    .marks{display:flex; flex-wrap:wrap; gap:8px}
+    .mark{padding:10px 12px; border-radius:999px; background:var(--surface); border:1px solid rgba(255,255,255,.08); min-height:40px; font-weight:800}
+
+    /* Sparkline */
+    .spark{width:100%; height:140px; display:block; background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)); border:1px solid rgba(255,255,255,.08); border-radius:12px}
+
+    footer.actions{position:sticky; bottom:0; left:0; right:0; margin-top:auto}
+    .bar{position:fixed; left:0; right:0; bottom:0; background:rgba(10,14,35,.85); backdrop-filter: blur(8px); border-top:1px solid rgba(255,255,255,.08); padding:8px 12px calc(8px + env(safe-area-inset-bottom)); display:flex; gap:8px}
+
+    .help{color:var(--muted); font-size:12px; margin-top:6px; text-align:center}
   </style>
 </head>
-<body data-theme="dark">
+<body>
   <div class="wrap">
-    <div class="title" aria-live="polite">스마트폰 슬라이더 제어 <span class="chip" id="percentView">0%</span></div>
-    <div class="subtitle">모바일 최적화: 큰 터치 타깃 · 진동/오디오 · 게이지 드래그 · 세이프에어리어 대응</div>
+    <header>
+      <div>
+        <div class="title">모바일 슬라이더 컨트롤</div>
+        <div class="subtitle">터치 최적화 · 큰 타깃 · 진동/공유</div>
+      </div>
+      <div class="chip"><span id="percent">0%</span></div>
+    </header>
 
-    <div class="row" style="justify-content:flex-end; gap:10px; margin-top:8px">
-      <label class="switch"><input type="checkbox" id="themeToggle"> <span>라이트</span></label>
-      <div class="pill"><span class="xsmall">매핑</span>
-        <select id="mapSel" class="btn">
-          <option value="linear">Linear</option>
-          <option value="log">Log</option>
-          <option value="expo">Exponential</option>
-          <option value="sigmoid">Sigmoid</option>
+    <section class="card" aria-labelledby="valueLabel">
+      <div class="value" id="valueLabel">
+        <div class="num" id="num">1,234</div>
+        <div class="unit" id="unit"> </div>
+      </div>
+
+      <input id="input" class="text-input" type="tel" inputmode="numeric" placeholder="숫자 입력" aria-label="값 입력" />
+
+      <div style="margin:14px 0">
+        <input id="slider" class="range" type="range" min="0" max="10000" step="10" aria-label="값 슬라이더" />
+      </div>
+
+      <div class="row">
+        <button class="btn" id="minus">−</button>
+        <select id="step" class="btn ghost" aria-label="스텝">
+          <option value="1">1</option>
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
         </select>
-      </div>
-      <div class="pill"><span class="xsmall">단위</span>
-        <select id="unitSel" class="btn"><option value="">없음</option><option value="%">%</option><option value="px">px</option><option value="ms">ms</option></select>
-      </div>
-      <div class="pill"><span class="xsmall">로케일</span>
-        <select id="localeSel" class="btn"><option value="ko-KR">ko-KR</option><option value="en-US">en-US</option><option value="ja-JP">ja-JP</option></select>
-      </div>
-      <label class="switch"><input type="checkbox" id="wheelToggle" checked> <span>휠</span></label>
-      <label class="switch"><input type="checkbox" id="animToggle" checked> <span>애니메</span></label>
-      <label class="switch"><input type="checkbox" id="audioToggle"> <span>오디오</span></label>
-      <label class="switch"><input type="checkbox" id="vibToggle"> <span>진동</span></label>
-    </div>
-
-    <div class="card grid">
-      <div>
-        <div class="row" style="gap:10px">
-          <div style="flex:1">
-            <label for="minInp">최소값</label>
-            <input id="minInp" class="text-input mono" type="tel" inputmode="numeric" value="0" />
-          </div>
-          <div style="flex:1">
-            <label for="maxInp">최대값</label>
-            <input id="maxInp" class="text-input mono" type="tel" inputmode="numeric" value="10000" />
-          </div>
-          <div style="width:180px">
-            <label for="stepSel">스텝</label>
-            <select id="stepSel" class="btn" style="width:100%">
-              <option value="1">1</option>
-              <option value="5">5</option>
-              <option value="10" selected>10</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select>
-          </div>
-        </div>
-
-        <label for="txt1" style="margin-top:12px">값 입력</label>
-        <input id="txt1" class="text-input mono" type="tel" inputmode="numeric" placeholder="숫자 입력" aria-label="값 입력" />
-        <div class="help">Enter로 적용 · 쉼표 자동포맷 · 잘못된 값은 자동 복구</div>
-
-        <div style="margin-top:14px">
-          <label for="s10">슬라이더</label>
-          <input id="s10" class="range" type="range" min="0" max="10000" step="1" aria-valuemin="0" aria-valuemax="10000" />
-          <div class="meta"><span>최소: <b id="minView">0</b></span><span>최대: <b id="maxView">10,000</b></span></div>
-        </div>
-
-        <div style="margin-top:12px">
-          <label>범위 선택(듀얼) — 최소/최대</label>
-          <div class="row">
-            <input id="rMin" class="range" type="range" min="0" max="10000" step="1" />
-            <input id="rMax" class="range" type="range" min="0" max="10000" step="1" />
-          </div>
-          <div class="meta"><span>선택범위: <b id="rangeView">0 ~ 10,000</b></span><span id="spanView">폭: 10,000</span><label class="switch"><input type="checkbox" id="lockSel"> <span>범위 잠금</span></label></div>
-        </div>
-
-        <div class="row" style="margin-top:16px">
-          <button class="btn" data-delta="-100">-100</button>
-          <button class="btn" data-delta="-10">-10</button>
-          <button class="btn secondary" data-delta="+10">+10</button>
-          <button class="btn secondary" data-delta="+100">+100</button>
-          <div class="grow"></div>
-          <button class="btn ok" id="copyBtn">값 복사</button>
-          <button class="btn warn" id="resetBtn">리셋</button>
-          <button class="btn" id="undoBtn">Undo</button>
-          <button class="btn" id="redoBtn">Redo</button>
-        </div>
-
-        <div class="row" style="margin-top:12px">
-          <div>
-            <label for="presetSel">프리셋</label>
-            <select id="presetSel" class="btn">
-              <option value="">선택…</option>
-              <option value="0">0</option>
-              <option value="1234">1,234</option>
-              <option value="5000">5,000</option>
-              <option value="7777">7,777</option>
-              <option value="10000">10,000</option>
-            </select>
-          </div>
-          <div>
-            <label>마크</label>
-            <div class="marks" id="marks">
-              <button class="mark" data-v="2500">2,500</button>
-              <button class="mark" data-v="3333">3,333</button>
-              <button class="mark" data-v="4096">4,096</button>
-              <button class="mark" data-v="8192">8,192</button>
-            </div>
-          </div>
-          <div class="grow"></div>
-          <div>
-            <label>커스텀 프리셋</label>
-            <div class="row">
-              <button class="btn" id="addPresetBtn">현재값 추가</button>
-              <button class="btn warn" id="clearPresetBtn">모두 삭제</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="help">슬라이더 더블탭 = 중앙값 · 게이지 드래그/탭으로 설정 가능</div>
+        <button class="btn" id="plus">＋</button>
+        <div class="grow"></div>
+        <label class="btn ghost" style="gap:6px">
+          <input type="checkbox" id="haptic" /> 진동
+        </label>
       </div>
 
-      <div>
-        <div class="panel">
-          <div class="gauge">
-            <div style="position:relative">
-              <svg id="gsvg" viewBox="0 0 120 120" aria-hidden="true">
-                <defs>
-                  <linearGradient id="g" x1="0" x2="1">
-                    <stop offset="0%" stop-color="var(--accent)"/>
-                    <stop offset="100%" stop-color="var(--accent-strong)"/>
-                  </linearGradient>
-                </defs>
-                <circle cx="60" cy="60" r="52" fill="none" stroke="var(--ring)" stroke-width="12" />
-                <circle id="arc" cx="60" cy="60" r="52" fill="none" stroke="url(#g)" stroke-linecap="round" stroke-width="12" transform="rotate(-90 60 60)" stroke-dasharray="0 999"/>
-              </svg>
-              <div class="val" id="gaugeVal">0</div>
-            </div>
-          </div>
-          <div>
-            <label>최근 값 추적</label>
-            <canvas id="chart" width="520" height="180"></canvas>
-            <div class="help">최대 80개 값 기록. 더블탭 초기화 · PNG로 내보내기 가능</div>
-          </div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <button class="btn" id="exportBtn">상태 내보내기(JSON)</button>
-          <input type="file" id="importFile" hidden accept="application/json" />
-          <button class="btn" id="importBtn">불러오기(JSON)</button>
-          <button class="btn" id="pngBtn">차트 PNG</button>
-          <div class="grow"></div>
-          <span class="xsmall">URL 공유: <span class="mono">#v,min,max,step,map,unit,theme</span></span>
-        </div>
-
-        <div class="card" style="margin-top:14px">
-          <div class="row" style="gap:10px">
-            <div class="pill">매크로 <button class="btn" id="recBtn">REC</button> <button class="btn" id="playBtn">PLAY</button> <button class="btn warn" id="clearRecBtn">CLR</button></div>
-            <label class="switch"><input type="checkbox" id="loopToggle"> <span>루프</span></label>
-            <div class="pill"><span class="xsmall">속도</span>
-              <select id="speedSel" class="btn"><option value="1">1×</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="0.5">0.5×</option></select>
-            </div>
-            <div class="pill danger" id="a11yLive" aria-live="polite">준비 완료</div>
-          </div>
-          <div class="help">REC: 값 변경 타임라인 기록 · PLAY: 시간 간격 그대로 재생(속도 가변)</div>
-        </div>
+      <div style="margin-top:12px">
+        <div class="marks" id="marks"></div>
       </div>
-    </div>
+      <div class="help">슬라이더 더블탭 = 중앙값 · 길게 누르면 연속 증가/감소</div>
+    </section>
 
-    <p class="subtitle" style="margin-top:16px">Author : <b>Kim YangHoo</b> · 모바일 터치 친화 · 세이프 에어리어 대응</p>
+    <!-- 최근 값 추적 카드 -->
+    <section class="card" aria-labelledby="histLabel">
+      <div class="row" style="justify-content:space-between; margin-bottom:8px">
+        <div class="subtitle" id="histLabel">최근 값 추적</div>
+        <div class="chip"><span id="histCount">0개</span></div>
+      </div>
+      <canvas id="spark" class="spark"></canvas>
+      <div class="row" style="margin-top:8px">
+        <button class="btn ghost" id="clearHist">기록 지우기</button>
+        <div class="grow"></div>
+        <button class="btn" id="png">PNG</button>
+      </div>
+      <div class="help">그래프 더블탭 = 초기화 · 최대 80개 기록</div>
+    </section>
+
+    <footer class="actions">
+      <div class="bar">
+        <button class="btn" id="copy">복사</button>
+        <button class="btn" id="share">공유</button>
+        <div class="grow"></div>
+        <button class="btn warn" id="reset">리셋</button>
+      </div>
+    </footer>
   </div>
 
-  <div id="toast" class="toast" role="status" aria-live="polite">완료!</div>
-
   <script>
-    const $ = (q)=>document.querySelector(q);
-    const $$ = (q)=>document.querySelectorAll(q);
+    const slider = document.getElementById('slider');
+    const input  = document.getElementById('input');
+    const numEl  = document.getElementById('num');
+    const unitEl = document.getElementById('unit');
+    const percentEl = document.getElementById('percent');
+    const minus = document.getElementById('minus');
+    const plus  = document.getElementById('plus');
+    const stepSel = document.getElementById('step');
+    const resetBtn = document.getElementById('reset');
+    const copyBtn  = document.getElementById('copy');
+    const shareBtn = document.getElementById('share');
+    const hapticChk= document.getElementById('haptic');
+    const marksEl  = document.getElementById('marks');
 
-    // Elements
-    const range=$('#s10'), input=$('#txt1'), rMin=$('#rMin'), rMax=$('#rMax');
-    const stepSel=$('#stepSel'), presetSel=$('#presetSel'), copyBtn=$('#copyBtn'), resetBtn=$('#resetBtn');
-    const percentView=$('#percentView'), toast=$('#toast'), marks=$('#marks');
-    const arc=$('#arc'), gaugeVal=$('#gaugeVal'), gsvg=$('#gsvg');
-    const themeToggle=$('#themeToggle'), wheelToggle=$('#wheelToggle'), animToggle=$('#animToggle');
-    const unitSel=$('#unitSel'), localeSel=$('#localeSel'), mapSel=$('#mapSel');
-    const undoBtn=$('#undoBtn'), redoBtn=$('#redoBtn');
-    const minInp=$('#minInp'), maxInp=$('#maxInp'), lockSel=$('#lockSel');
-    const addPresetBtn=$('#addPresetBtn'), clearPresetBtn=$('#clearPresetBtn');
-    const chart=$('#chart'), ctx=chart.getContext('2d');
-    const exportBtn=$('#exportBtn'), importBtn=$('#importBtn'), importFile=$('#importFile'), pngBtn=$('#pngBtn');
-    const recBtn=$('#recBtn'), playBtn=$('#playBtn'), clearRecBtn=$('#clearRecBtn'), loopToggle=$('#loopToggle'), speedSel=$('#speedSel');
-    const live=$('#a11yLive');
+    // History elements
+    const spark = document.getElementById('spark');
+    const sctx = spark.getContext('2d');
+    const clearHistBtn = document.getElementById('clearHist');
+    const pngBtn = document.getElementById('png');
+    const histCount = document.getElementById('histCount');
 
-    const SAV_KEY='slider.ultra.v1';
+    const SAV_KEY = 'mobile.slider.v1';
 
-    // State
-    const st={
-      min:0, max:10000, unit:'', locale:'ko-KR', map:'linear', step:10,
-      hist:[], maxHist:80, undos:[], redos:[],
-      anim:true, audio:false, vib:false, lock:false,
-      rec:[], recStart:0, recOn:false
-    };
+    const st = { min:0, max:10000, step:10, unit:'', locale:'ko-KR', hist:[], maxHist:80 };
 
-    // WebAudio (optional)
-    let audioCtx=null, osc=null;
+    function clamp(v,min,max){ return Math.min(Math.max(v,min),max); }
+    function parseNum(v){ return Number(String(v).replace(/,/g,'').trim()); }
+    function pc(v){ return Math.round( ( (v-st.min) / (st.max-st.min) ) * 100 ); }
+    function fmt(v){ return Number(v).toLocaleString(st.locale) + (st.unit? ' '+st.unit:''); }
 
-    // Utils
-    const clamp=(v,min,max)=>Math.min(Math.max(v,min),max);
-    const parseNum=(v)=> Number(String(v).replace(/,/g,'').trim());
-    const fmt=(v)=> Number(v).toLocaleString(st.locale)+(st.unit? ' '+st.unit:'');
-    const pcent=(v)=> ((v-st.min)/(st.max-st.min));
-    const pct=(v)=> Math.round(pcent(v)*100);
-    const isMobile = matchMedia('(pointer:coarse)').matches;
+    function setBG(el,val){ const p = pc(val); el.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${p}%, #e5e7eb ${p}%, #e5e7eb 100%)`; }
 
-    // Chart
-    function drawChart(){
-      ctx.clearRect(0,0,chart.width,chart.height);
-      ctx.globalAlpha=.12; ctx.strokeStyle='#8da2fb';
-      for(let i=0;i<=10;i++){ const y=(chart.height-20)*i/10 + 10; ctx.beginPath(); ctx.moveTo(30,y); ctx.lineTo(chart.width-10,y); ctx.stroke(); }
-      ctx.globalAlpha=1; ctx.lineWidth=2; ctx.strokeStyle='#22d3ee'; ctx.beginPath();
-      const N=st.hist.length; if(!N) return; const W=chart.width-40, H=chart.height-30, x0=30, y0=chart.height-10;
-      st.hist.forEach((val,i)=>{ const x=x0 + (W*(i/Math.max(N-1,1))); const y=y0 - (H*pcent(val)); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); });
-      ctx.stroke();
+    function render(v){
+      v = clamp(v, st.min, st.max);
+      slider.value = String(v);
+      numEl.textContent = Number(v).toLocaleString(st.locale);
+      percentEl.textContent = pc(v) + '%';
+      input.value = Number(v).toLocaleString(st.locale);
+      setBG(slider, v);
+      localStorage.setItem(SAV_KEY, JSON.stringify({v, step:st.step, unit:st.unit, locale:st.locale, hist:st.hist}));
     }
 
-    // Gauge
-    function updateGauge(v){ const r=52,circ=2*Math.PI*r,p=pcent(v); arc.setAttribute('stroke-dasharray', `${circ*p} ${circ*(1-p)}`); gaugeVal.textContent=fmt(v); }
-
-    // History + Undo/Redo
-    function pushHistory(v){ st.hist.push(v); if(st.hist.length>st.maxHist) st.hist.shift(); st.undos.push(v); if(st.undos.length>300) st.undos.shift(); st.redos.length=0; drawChart(); }
-    function undo(){ if(st.undos.length<=1) return; const cur=st.undos.pop(); st.redos.push(cur); const prev=st.undos[st.undos.length-1]; applyValue(prev,false,true); }
-    function redo(){ if(!st.redos.length) return; const v=st.redos.pop(); st.undos.push(v); applyValue(v,false,true); }
-
-    // Smooth animation
-    let animRAF=null; function animateTo(target){ if(!st.anim){ applyValue(target); return; } cancelAnimationFrame(animRAF); const start=Number(range.value); const t0=performance.now(); const dur=300; (function step(now){ const t=Math.min(1,(now-t0)/dur); const e= t<.5? 2*t*t : -1+(4-2*t)*t; const v=start + (target-start)*e; applyValue(v,false,false); if(t<1) animRAF=requestAnimationFrame(step); else applyValue(target,false,true); }) (t0); }
-
-    // Main UI update
-    function applyValue(val, push=true, finalize=false){
-      val = clamp(val, st.min, st.max);
-      range.value = String(val);
-      input.value = Number(val).toLocaleString(st.locale);
-      $('#minView').textContent = Number(st.min).toLocaleString(st.locale);
-      $('#maxView').textContent = Number(st.max).toLocaleString(st.locale);
-      setRangeBG(range,val); setRangeBG(rMin, Number(rMin.value)); setRangeBG(rMax, Number(rMax.value));
-      percentView.textContent = pct(val)+'%';
-      updateGauge(val);
-      if(push) pushHistory(val);
-      if(finalize && st.vib && navigator.vibrate){ navigator.vibrate([5]); }
-      if(st.audio){ tryStartAudio(); const f=110 + 660*pcent(val); if(osc) osc.frequency.value=f; }
-      localStorage.setItem(SAV_KEY, JSON.stringify({v:val, min:st.min, max:st.max, step:st.step, unit:st.unit, locale:st.locale, map:st.map, theme:document.body.dataset.theme}));
-      location.hash = `v=${Math.round(val)}&min=${st.min}&max=${st.max}&step=${st.step}&map=${st.map}&unit=${encodeURIComponent(st.unit)}&theme=${document.body.dataset.theme}`;
+    let lastLogT = 0;
+    function apply(v, finalize=true){
+      render(v);
+      if(finalize && hapticChk.checked && navigator.vibrate){ navigator.vibrate(7); }
+      if(finalize || (Date.now()-lastLogT>180)) { pushHistory(Number(v)); lastLogT = Date.now(); }
+      location.hash = `v=${Math.round(v)}&step=${st.step}`;
     }
 
-    function setRangeBG(el,val){ const p=pct(val); el.style.background=`linear-gradient(to right, var(--accent) 0%, var(--accent) ${p}%, #e5e7eb ${p}%, #e5e7eb 100%)`; }
-    function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 1200); }
+    // History
+    function pushHistory(v){
+      if(st.hist.length && st.hist[st.hist.length-1]===v) return; // dedupe
+      st.hist.push(v); if(st.hist.length>st.maxHist) st.hist.shift();
+      histCount.textContent = st.hist.length + '개';
+      drawSpark();
+    }
 
-    // Events: slider & text
-    range.addEventListener('input', e=> applyValue(parseNum(e.target.value)) );
-    range.addEventListener('dblclick', ()=> animateTo((st.min+st.max)/2));
+    function resizeSpark(){
+      const dpr = window.devicePixelRatio || 1;
+      const rect = spark.getBoundingClientRect();
+      const cssW = rect.width || 600; const cssH = 140; // target CSS px height
+      spark.width = Math.round(cssW * dpr);
+      spark.height= Math.round(cssH * dpr);
+      sctx.setTransform(1,0,0,1,0,0);
+      sctx.scale(dpr,dpr);
+      drawSpark();
+    }
 
-    function commitText(){ let v=parseNum(input.value); if(Number.isNaN(v)) v=Number(range.value); if(lockSel.checked){ v=clamp(v, Number(rMin.value), Number(rMax.value)); } applyValue(v, true, true); }
-    input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ commitText(); input.blur(); }});
-    input.addEventListener('blur', commitText);
+    function drawSpark(){
+      const rect = spark.getBoundingClientRect();
+      const W = rect.width || 600; const H = 140; const L= st.hist.length;
+      sctx.clearRect(0,0,W,H);
+      // grid
+      sctx.globalAlpha=.12; sctx.strokeStyle='#8da2fb';
+      for(let i=0;i<=4;i++){ const y=10 + (H-20)*i/4; sctx.beginPath(); sctx.moveTo(30,y); sctx.lineTo(W-10,y); sctx.stroke(); }
+      sctx.globalAlpha=1; sctx.lineWidth=2; sctx.strokeStyle='#22d3ee';
+      if(!L) return;
+      const x0=30, x1=W-10, Y0=H-10, Y1=10; const span=Math.max(1,L-1);
+      sctx.beginPath();
+      for(let i=0;i<L;i++){
+        const x = x0 + (x1-x0)*(i/span);
+        const p = clamp((st.hist[i]-st.min)/(st.max-st.min),0,1);
+        const y = Y0 - (Y0-Y1)*p;
+        if(i===0) sctx.moveTo(x,y); else sctx.lineTo(x,y);
+      }
+      sctx.stroke();
+    }
 
-    // Dual range
-    function syncDual(){ let a=Number(rMin.value), b=Number(rMax.value); if(a>b){ [a,b]=[b,a]; rMin.value=a; rMax.value=b; } $('#rangeView').textContent=`${Number(a).toLocaleString(st.locale)} ~ ${Number(b).toLocaleString(st.locale)}`; $('#spanView').textContent=`폭: ${(b-a).toLocaleString(st.locale)}`; if(lockSel.checked){ const v=clamp(Number(range.value), a,b); applyValue(v,false,true); } setRangeBG(rMin,a); setRangeBG(rMax,b); }
-    rMin.addEventListener('input', syncDual); rMax.addEventListener('input', syncDual);
+    // Double-tap center on slider
+    let lastTap = 0;
+    slider.addEventListener('touchend', ()=>{
+      const now = Date.now(); if(now - lastTap < 300){ apply((st.min + st.max)/2, true); } lastTap = now;
+    }, {passive:true});
 
-    // Step
-    stepSel.addEventListener('change', ()=>{ st.step=Number(stepSel.value); range.step=rMin.step=rMax.step=st.step; applyValue(Number(range.value), false, true); });
+    // Double-tap clear on spark
+    let lastTapSpark=0;
+    spark.addEventListener('touchend', ()=>{ const now=Date.now(); if(now-lastTapSpark<300){ st.hist.length=0; histCount.textContent='0개'; drawSpark(); } lastTapSpark=now; }, {passive:true});
 
-    // Min/Max inputs
-    function applyMinMax(){ const mn=parseNum(minInp.value), mx=parseNum(maxInp.value); if(!Number.isFinite(mn)||!Number.isFinite(mx)||mn>=mx) return showToast('최소/최대 확인'); st.min=mn; st.max=mx; range.min=mn; range.max=mx; rMin.min=mn; rMax.max=mx; if(Number(rMin.value)<mn) rMin.value=mn; if(Number(rMax.value)>mx) rMax.value=mx; syncDual(); applyValue(clamp(Number(range.value), mn, mx), false, true); }
-    minInp.addEventListener('change', applyMinMax); maxInp.addEventListener('change', applyMinMax);
+    // Slider input
+    slider.addEventListener('input', (e)=>{ apply(parseNum(e.target.value), false); });
+    slider.addEventListener('change', (e)=>{ apply(parseNum(e.target.value), true); });
 
-    // Presets
-    presetSel.addEventListener('change', ()=>{ if(!presetSel.value) return; animateTo(parseNum(presetSel.value)); presetSel.value=''; });
-    $('#marks').addEventListener('click', (e)=>{ const b=e.target.closest('.mark'); if(!b) return; $$('.mark').forEach(m=>m.classList.remove('active')); b.classList.add('active'); animateTo(parseNum(b.dataset.v)); });
-    addPresetBtn.addEventListener('click', ()=>{ const v=Math.round(Number(range.value)); const btn=document.createElement('button'); btn.className='mark'; btn.dataset.v=String(v); btn.textContent=v.toLocaleString(st.locale); $('#marks').appendChild(btn); showToast('프리셋 추가'); });
-    clearPresetBtn.addEventListener('click', ()=>{ $$('.mark').forEach((m,i)=>{ if(i<4) return; m.remove(); }); showToast('커스텀 프리셋 삭제'); });
+    // Text input commit
+    function commit(){ let v = parseNum(input.value); if(Number.isNaN(v)) v = Number(slider.value); apply(v, true); }
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); commit(); input.blur(); } });
+    input.addEventListener('blur', commit);
 
-    // Copy/Reset
-    $('#copyBtn').addEventListener('click', async ()=>{ const v=Number(range.value); try{ await navigator.clipboard.writeText(String(v)); showToast('복사: '+fmt(v)); }catch{ showToast('복사 실패'); }});
-    resetBtn.addEventListener('click', ()=> animateTo(st.min));
+    // Step & +/- with press-and-hold
+    stepSel.addEventListener('change', ()=>{ st.step = Number(stepSel.value)||1; slider.step = st.step; });
 
-    // Keyboard + Undo/Redo + Wheel (wheel은 모바일에서 자동 무시)
-    range.addEventListener('keydown', e=>{ const step=st.step||1; const big=step*10; let v=Number(range.value); if(e.key==='ArrowLeft') v-= (e.shiftKey? big: step); else if(e.key==='ArrowRight') v+= (e.shiftKey? big: step); else if(e.ctrlKey&&e.key.toLowerCase()==='z'){ e.preventDefault(); return undo(); } else if(e.ctrlKey&&e.key.toLowerCase()==='y'){ e.preventDefault(); return redo(); } else return; e.preventDefault(); animateTo(v); });
-    undoBtn.addEventListener('click', undo); redoBtn.addEventListener('click', redo);
-    function wheelHandler(e){ if(!wheelToggle.checked) return; e.preventDefault(); const step=st.step||1; const v=Number(range.value)+(e.deltaY<0? step: -step); animateTo(v); }
-    range.addEventListener('wheel', wheelHandler, {passive:false});
+    let holdTimer=null, holdDelta=0, holdDelay=400, holdInterval=60;
+    function startHold(delta){ bump(delta); holdDelta=delta; if(holdTimer) clearTimeout(holdTimer); holdTimer = setTimeout(()=>{ holdTimer = setInterval(()=> bump(holdDelta), holdInterval); }, holdDelay); }
+    function endHold(){ if(holdTimer){ clearTimeout(holdTimer); clearInterval(holdTimer); holdTimer=null; } }
+    function bump(delta){ const v = Number(slider.value) + delta; apply(v, false); }
 
-    // Theme / Unit / Locale / Map
-    animToggle.addEventListener('change', ()=>{ st.anim=animToggle.checked; showToast(st.anim? '애니메 ON':'애니메 OFF'); });
-    themeToggle.addEventListener('change', ()=>{ document.body.dataset.theme=themeToggle.checked? 'light':'dark'; applyValue(Number(range.value), false, true); });
-    unitSel.addEventListener('change', ()=>{ st.unit=unitSel.value; applyValue(Number(range.value), false, true); });
-    localeSel.addEventListener('change', ()=>{ st.locale=localeSel.value; syncDual(); applyValue(Number(range.value), false, true); });
-    mapSel.addEventListener('change', ()=>{ showToast('매핑: '+mapSel.value); });
-    $('#lockSel').addEventListener('change', ()=>{ st.lock=lockSel.checked; if(st.lock) commitText(); });
+    minus.addEventListener('pointerdown', ()=> startHold(-st.step));
+    plus .addEventListener('pointerdown', ()=> startHold(+st.step));
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=>{ minus.addEventListener(ev, endHold); plus.addEventListener(ev, endHold); });
 
-    // Audio/Vibration (모바일 정책 고려: 첫 터치 시 초기화)
-    document.addEventListener('touchstart', ()=>{ if(audioCtx && audioCtx.state==='suspended'){ audioCtx.resume().catch(()=>{}); } }, {once:true, passive:true});
-    $('#audioToggle').addEventListener('change', (e)=>{ st.audio=e.target.checked; if(!st.audio) stopAudio(); else tryStartAudio(); });
-    $('#vibToggle').addEventListener('change', (e)=>{ st.vib=e.target.checked; });
-    function tryStartAudio(){ if(audioCtx) return; try{ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); osc=audioCtx.createOscillator(); const gain=audioCtx.createGain(); gain.gain.value=.02; osc.connect(gain).connect(audioCtx.destination); osc.type='sine'; osc.frequency.value=220; osc.start(); }catch{} }
-    function stopAudio(){ if(osc){ try{osc.stop();}catch{} osc=null; } if(audioCtx){ try{audioCtx.close();}catch{} audioCtx=null; } }
+    // Preset marks (자주 쓰는 값)
+    const presets = [0, 1234, 2500, 5000, 7777, 10000];
+    presets.forEach(v=>{ const b=document.createElement('button'); b.className='mark'; b.textContent=Number(v).toLocaleString(st.locale); b.addEventListener('click', ()=>apply(v, true)); marksEl.appendChild(b); });
 
-    // Gauge drag (터치/마우스 공통 Pointer Events)
-    let draggingGauge=false;
-    function valFromGaugeEvent(e){ const rect=gsvg.getBoundingClientRect(); const cx=rect.left+rect.width/2; const cy=rect.top+rect.height/2; const x=(e.clientX??(e.touches?.[0]?.clientX)); const y=(e.clientY??(e.touches?.[0]?.clientY)); const dx=x-cx, dy=y-cy; let ang=Math.atan2(dy,dx); ang = (ang+Math.PI/2+2*Math.PI)%(2*Math.PI); const p=ang/(2*Math.PI); return st.min + p*(st.max-st.min); }
-    function startGaugeDrag(e){ draggingGauge=true; e.preventDefault(); animateTo(valFromGaugeEvent(e)); }
-    function moveGaugeDrag(e){ if(!draggingGauge) return; e.preventDefault(); applyValue(valFromGaugeEvent(e), false, false); }
-    function endGaugeDrag(){ if(!draggingGauge) return; draggingGauge=false; applyValue(Number(range.value), false, true); }
-    gsvg.addEventListener('pointerdown', startGaugeDrag);
-    window.addEventListener('pointermove', moveGaugeDrag, {passive:false});
-    window.addEventListener('pointerup', endGaugeDrag);
+    // Copy & Share
+    copyBtn.addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(String(slider.value)); }catch{} });
+    shareBtn.addEventListener('click', async ()=>{ const url = new URL(location.href); url.hash = `v=${slider.value}&step=${st.step}`; if(navigator.share){ try{ await navigator.share({title:'슬라이더 값', text:`값: ${fmt(slider.value)}`, url:url.href}); }catch{} } else { try{ await navigator.clipboard.writeText(url.href); }catch{} } });
 
-    // Export / Import / PNG
-    exportBtn.addEventListener('click', ()=>{ const blob=new Blob([JSON.stringify({value:Number(range.value), hist:st.hist, unit:st.unit, locale:st.locale, min:st.min, max:st.max, step:st.step}, null, 2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='slider_state.json'; a.click(); URL.revokeObjectURL(a.href); });
-    importBtn.addEventListener('click', ()=> importFile.click());
-    importFile.addEventListener('change', async (e)=>{ const f=e.target.files[0]; if(!f) return; const txt=await f.text(); try{ const o=JSON.parse(txt); if(Number.isFinite(o.min)&&Number.isFinite(o.max)&&o.min<o.max){ st.min=o.min; st.max=o.max; range.min=o.min; range.max=o.max; rMin.min=o.min; rMax.max=o.max; minInp.value=o.min; maxInp.value=o.max; } if(typeof o.step==='number'){ st.step=o.step; stepSel.value=String(o.step); range.step=o.step; rMin.step=o.step; rMax.step=o.step; } if(o.unit){ st.unit=o.unit; unitSel.value=o.unit; } if(o.locale){ st.locale=o.locale; localeSel.value=o.locale; } if(Array.isArray(o.hist)){ st.hist=o.hist.slice(-st.maxHist); } if(typeof o.value==='number'){ animateTo(o.value); } drawChart(); showToast('불러오기 완료'); }catch{ showToast('불러오기 실패'); } });
-    pngBtn.addEventListener('click', ()=>{ const a=document.createElement('a'); a.download='chart.png'; a.href=chart.toDataURL('image/png'); a.click(); });
+    resetBtn.addEventListener('click', ()=> apply(st.min, true));
 
-    // Init
+    // History controls
+    clearHistBtn.addEventListener('click', ()=>{ st.hist.length=0; histCount.textContent='0개'; drawSpark(); });
+    pngBtn.addEventListener('click', ()=>{ const a=document.createElement('a'); a.download='history.png'; a.href=spark.toDataURL('image/png'); a.click(); });
+
+    // Init from hash/localStorage
     (function init(){
-      // 전역 에러 핸들러(디버깅용)
-      window.addEventListener('error', (e)=>{ try{ showToast('에러: '+ e.message); }catch{} });
-      const hash=new URLSearchParams(location.hash.replace('#',''));
-      const saved=(()=>{ try{return JSON.parse(localStorage.getItem(SAV_KEY)||'null')}catch{return null} })();
-      st.locale=hash.get('locale')||saved?.locale||'ko-KR'; localeSel.value=st.locale;
-      st.unit=decodeURIComponent(hash.get('unit')|| saved?.unit || ''); unitSel.value=st.unit;
-      st.min=Number(hash.get('min')|| saved?.min || 0); st.max=Number(hash.get('max')|| saved?.max || 10000);
-      st.step=Number(hash.get('step')|| saved?.step || (isMobile? 5: 10));
-      document.body.dataset.theme = hash.get('theme') || saved?.theme || 'dark'; themeToggle.checked=(document.body.dataset.theme==='light');
-
-      range.min=st.min; range.max=st.max; range.step=st.step; rMin.min=st.min; rMax.max=st.max; rMin.step=st.step; rMax.step=st.step; minInp.value=st.min; maxInp.value=st.max;
-      $('#minView').textContent=st.min.toLocaleString(st.locale); $('#maxView').textContent=st.max.toLocaleString(st.locale);
-      const start = Number(hash.get('v')) || saved?.v || 1234; rMin.value=st.min; rMax.value=st.max; syncDual();
-      applyValue(start,true,true); drawChart();
+      const hash = new URLSearchParams(location.hash.replace('#',''));
+      let saved=null; try{ saved = JSON.parse(localStorage.getItem(SAV_KEY)||'null'); }catch{}
+      st.step = Number(hash.get('step')) || (saved && saved.step) || 10; slider.step = st.step; stepSel.value = String(st.step);
+      const start = Number(hash.get('v')) || (saved && saved.v) || 1234;
+      if(saved && Array.isArray(saved.hist)) { st.hist = saved.hist.slice(-st.maxHist); }
+      resizeSpark();
+      apply(start, false);
+      window.addEventListener('resize', resizeSpark);
     })();
   </script>
 </body>
